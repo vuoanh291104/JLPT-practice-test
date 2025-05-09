@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://authen-service
+          predicates:
+            - Path=/api/auth/**
+        - id: exam-service
+          uri: lb://exam-service
+          predicates:
+            - Path=/api/exam/**
+        - id: question-bank-service
+          uri: lb://question-bank-service
+          predicates:
+            - Path=/api/question/**
+      discovery:
+        locator:
+          enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka

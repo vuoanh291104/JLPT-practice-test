@@ -1,0 +1,18 @@
+package com.jlptpracticetest.authen_service
+
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
+import org.springframework.stereotype.Component
+import java.io.FileInputStream
+
+@Component
+class FirebaseInitializer {
+    init {
+        val serviceAccount = FileInputStream("authen-service/jlpt-practice-test-firebase-adminsdk-fbsvc-db90114924.json")
+        val options = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+            .build()
+        FirebaseApp.initializeApp(options)
+    }
+}

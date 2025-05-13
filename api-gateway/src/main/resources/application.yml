@@ -18,12 +18,17 @@ spring:
         - id: question-bank-service
           uri: lb://question-bank-service
           predicates:
-            - Path=/api/question/**
+            - Path=/api/questions/**
       discovery:
         locator:
-          enabled: true
+          enabled: false
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.cloud.gateway: DEBUG

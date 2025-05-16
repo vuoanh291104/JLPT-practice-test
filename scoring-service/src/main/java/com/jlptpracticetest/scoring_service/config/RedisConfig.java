@@ -1,7 +1,11 @@
-package com.jlptpracticetest.exam_service.config;
+package com.jlptpracticetest.scoring_service.config;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jlptpracticetest.exam_service.model.ExamSessionRedis;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.jlptpracticetest.scoring_service.model.ExamSessionRedis;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -27,5 +31,6 @@ public class RedisConfig {
         template.setHashValueSerializer(serializer);
 
         return template;
+
     }
 }

@@ -5,10 +5,7 @@ import com.jlptpracticetest.exam_service.model.ExamSessionRedis;
 import com.jlptpracticetest.exam_service.service.ExamSessionRedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -40,5 +37,12 @@ public class ExamAnswerController {
                 userAnsweDTO.getSelectedOptionIndex()
         );
         return ResponseEntity.ok("answer saved");
+    }
+
+    @PostMapping("/submit")
+    public ResponseEntity<String> submitExam(@RequestParam String sessionId){
+        examSessionRedisService.submitSession(sessionId);
+        return ResponseEntity.ok("exam submitted successfully");
+
     }
 }

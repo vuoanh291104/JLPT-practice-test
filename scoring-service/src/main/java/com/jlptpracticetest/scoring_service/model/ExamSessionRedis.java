@@ -1,11 +1,8 @@
-package com.jlptpracticetest.exam_service.model;
-
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+package com.jlptpracticetest.scoring_service.model;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class ExamSessionRedis implements Serializable {
     private String sessionId;

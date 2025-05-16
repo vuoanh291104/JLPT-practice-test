@@ -8,7 +8,9 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/auth")
-class AuthController {
+class AuthController(
+    private val jwtUtil: JwtUtil
+) {
 
     data class LoginRequest(val firebaseToken: String)
     data class LoginResponse(
@@ -26,11 +28,11 @@ class AuthController {
         val decoded = FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
         val uid = decoded.uid
         val email = decoded.email ?: ""
-        val role = "user" // lấy từ DB nếu cần
+        val role = "user" // có thể lấy từ DB nếu có
 
         val userData = mapOf("uid" to uid, "email" to email, "role" to role)
 
-        val accessToken = JwtUtil.generateToken(userData)
+        val accessToken = jwtUtil.generateToken(userData)
         val refreshToken = UUID.randomUUID().toString()
 
         refreshStore[uid] = refreshToken
@@ -44,22 +46,8 @@ class AuthController {
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
 
         val userData = mapOf("uid" to uid, "email" to "", "role" to "user")
-        val newAccessToken = JwtUtil.generateToken(userData)
+        val newAccessToken = jwtUtil.generateToken(userData)
 
         return ResponseEntity.ok(mapOf("accessToken" to newAccessToken))
-    }
-
-    @GetMapping("/user-exams")
-    fun getUserExams(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<Map<String, Any>>> {
-        val token = authHeader.removePrefix("Bearer ")
-        val claims = JwtUtil.validateToken(token)
-
-        val uid = claims["uid"] as String
-        // giả sử lấy dữ liệu từ DB
-        val exams = listOf(
-            mapOf("examName" to "Toán", "score" to 8.5),
-            mapOf("examName" to "Lý", "score" to 7.0)
-        )
-        return ResponseEntity.ok(exams)
     }
 }

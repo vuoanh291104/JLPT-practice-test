@@ -1,6 +1,7 @@
 package com.jlptpracticetest.authen_service
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.cloud.FirestoreClient
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -28,7 +29,18 @@ class AuthController(
         val decoded = FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
         val uid = decoded.uid
         val email = decoded.email ?: ""
-        val role = "user" // có thể lấy từ DB nếu có
+
+        // Lấy Firestore instance
+        val firestore = FirestoreClient.getFirestore()
+
+        // Lấy document từ collection "users" với ID là uid
+        val userDoc = firestore.collection("users").document(uid).get().get()
+
+        if (!userDoc.exists()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
+        }
+
+        val role = userDoc.getString("role") ?: "user" // fallback nếu không có trường "role"
 
         val userData = mapOf("uid" to uid, "email" to email, "role" to role)
 

@@ -1,5 +1,7 @@
 package com.jlptpracticetest.scoring_service.service.impl;
 
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.cloud.FirestoreClient;
 import com.jlptpracticetest.scoring_service.model.ExamSessionRedis;
 import com.jlptpracticetest.scoring_service.model.Question;
 import com.jlptpracticetest.scoring_service.model.QuestionSet;
@@ -72,6 +74,29 @@ public class ScoringServiceImpl implements ScoringService {
                 sectionCorrect.getOrDefault("reading", 0), sectionTotal.getOrDefault("reading", 0),
                 sectionCorrect.getOrDefault("listening", 0), sectionTotal.getOrDefault("listening", 0)
         );
+
+        // Save to Firestore
+        try {
+            Firestore firestore = FirestoreClient.getFirestore();
+
+            Map<String, Object> scoreData = new HashMap<>();
+            scoreData.put("userId", userId);
+            scoreData.put("vocabScore", vocabScore);
+            scoreData.put("readingScore", readingScore);
+            scoreData.put("listeningScore", listeningScore);
+            scoreData.put("totalScore", totalScore);
+            scoreData.put("timestamp", System.currentTimeMillis()); // optional: để biết khi nào lưu
+
+            firestore.collection("exams")
+                    .document(examId)
+                    .set(scoreData)
+                    .get(); // blocking, nếu muốn async thì không cần .get()
+
+            log.info("Saved score to Firestore for examId={}", examId);
+        } catch (Exception e) {
+            log.error("Failed to save score to Firestore for examId={}", examId, e);
+        }
+
     }
     private int calculateScore(int correct, int total) {
         if (total == 0) return 0;

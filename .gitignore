@@ -13,3 +13,6 @@ target/
 .DS_Store 
 Thumbs.db 
 */src/main/resources/firebase/jlpt-practice-test-firebase-adminsdk-fbsvc-db90114924.json
+.history/
+node_modules/
+k8s/

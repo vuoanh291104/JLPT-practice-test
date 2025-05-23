@@ -73,12 +73,7 @@
 			<version>0.9.1</version>
 			<scope>compile</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.jlptpracticetest</groupId>
-            <artifactId>exam-service</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
+
     </dependencies>
 	<dependencyManagement>
 		<dependencies>

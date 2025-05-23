@@ -12,4 +12,4 @@ mvnw.cmd
 target/ 
 .DS_Store 
 Thumbs.db 
-authen-service/src/main/resources/firebase/jlpt-practice-test-firebase-adminsdk-fbsvc-db90114924.json
+*/src/main/resources/firebase/jlpt-practice-test-firebase-adminsdk-fbsvc-db90114924.json

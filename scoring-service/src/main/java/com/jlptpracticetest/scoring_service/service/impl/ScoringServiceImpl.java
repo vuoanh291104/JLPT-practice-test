@@ -32,7 +32,6 @@ public class ScoringServiceImpl implements ScoringService {
             throw new RuntimeException("Exam session not found in Redis for sessionId: " + sessionId);
 
         }
-        // TODO: Save
         String userId= session.getUserId();
         String examId = session.getExamId();
         Map<String ,Map<Integer,Integer>> userAnswers = session.getAnswers();
@@ -60,7 +59,6 @@ public class ScoringServiceImpl implements ScoringService {
             sectionCorrect.put(section, correctCount);
             sectionTotal.put(section, total);
         }
-        //TODO: Save to firebase
         int vocabScore = calculateScore(sectionCorrect.getOrDefault("vocabulary", 0), sectionTotal.getOrDefault("vocabulary", 0));
         int readingScore = calculateScore(sectionCorrect.getOrDefault("reading", 0), sectionTotal.getOrDefault("reading", 0));
         int listeningScore = calculateScore(sectionCorrect.getOrDefault("listening", 0), sectionTotal.getOrDefault("listening", 0));
@@ -81,14 +79,15 @@ public class ScoringServiceImpl implements ScoringService {
 
             Map<String, Object> scoreData = new HashMap<>();
             scoreData.put("userId", userId);
+            scoreData.put("examId", examId);
             scoreData.put("vocabScore", vocabScore);
             scoreData.put("readingScore", readingScore);
             scoreData.put("listeningScore", listeningScore);
             scoreData.put("totalScore", totalScore);
             scoreData.put("timestamp", System.currentTimeMillis()); // optional: để biết khi nào lưu
 
-            firestore.collection("exams")
-                    .document(examId)
+            firestore.collection("sessions")
+                    .document(sessionId)
                     .set(scoreData)
                     .get(); // blocking, nếu muốn async thì không cần .get()
 
@@ -96,7 +95,6 @@ public class ScoringServiceImpl implements ScoringService {
         } catch (Exception e) {
             log.error("Failed to save score to Firestore for examId={}", examId, e);
         }
-
     }
     private int calculateScore(int correct, int total) {
         if (total == 0) return 0;

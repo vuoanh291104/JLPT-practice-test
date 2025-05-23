@@ -1,6 +1,7 @@
 package com.jlptpracticetest.authen_service
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,6 +20,17 @@ class AuthController(
         val refreshToken: String,
         val user: Map<String, Any>
     )
+    data class RegisterRequest(
+        val email: String,
+        val password: String
+    )
+
+    data class RegisterResponse(
+        val accessToken: String,
+        val refreshToken: String,
+        val user: Map<String, Any>
+    )
+
 
     data class RefreshRequest(val refreshToken: String)
 
@@ -50,6 +62,38 @@ class AuthController(
         refreshStore[uid] = refreshToken
 
         return ResponseEntity.ok(LoginResponse(accessToken, refreshToken, userData))
+    }
+    @PostMapping("/register")
+    fun register(@RequestBody request: RegisterRequest): ResponseEntity<RegisterResponse> {
+        try {
+            // Tạo user mới trên Firebase Authentication
+            val userRecord = FirebaseAuth.getInstance().createUser(
+                UserRecord.CreateRequest()
+                    .setEmail(request.email)
+                    .setPassword(request.password)
+                    .setEmailVerified(false)
+            )
+
+            val uid = userRecord.uid
+
+            // Lưu thông tin user vào Firestore (ví dụ, thêm trường role mặc định "user")
+            val firestore = FirestoreClient.getFirestore()
+            val userData = mapOf(
+                "email" to request.email,
+                "role" to "user"
+            )
+            firestore.collection("users").document(uid).set(userData).get() // đợi hoàn thành
+
+            // Tạo dữ liệu trả về JWT
+            val tokenData = mapOf("uid" to uid, "email" to request.email, "role" to "user")
+            val accessToken = jwtUtil.generateToken(tokenData)
+            val refreshToken = UUID.randomUUID().toString()
+            refreshStore[uid] = refreshToken
+
+            return ResponseEntity.ok(RegisterResponse(accessToken, refreshToken, tokenData))
+        } catch (ex: Exception) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+        }
     }
 
     @PostMapping("/refresh-token")

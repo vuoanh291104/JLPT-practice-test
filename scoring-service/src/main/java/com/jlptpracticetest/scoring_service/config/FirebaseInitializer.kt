@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 import java.io.FileInputStream
 
 @Component
-    class FirebaseInitializer {
+class FirebaseInitializer {
     init {
         val serviceAccount = ClassPathResource("firebase/jlpt-practice-test-firebase-adminsdk-fbsvc-db90114924.json").inputStream
         val options = FirebaseOptions.builder()

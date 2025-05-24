@@ -70,7 +70,7 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
-            <version>0.9.1</version>
+            <version>0.12.6</version>
         </dependency>
     </dependencies>
 	<dependencyManagement>
@@ -120,7 +120,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>20</jvmTarget>
+                    <jvmTarget>21</jvmTarget>
                 </configuration>
             </plugin>
             <plugin>

@@ -1,7 +1,6 @@
 package com.jlptpracticetest.authen_service
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserRecord
 import com.google.firebase.cloud.FirestoreClient
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,8 +20,7 @@ class AuthController(
         val user: Map<String, Any>
     )
     data class RegisterRequest(
-        val email: String,
-        val password: String
+        val firebaseToken: String
     )
 
     data class RegisterResponse(
@@ -38,7 +36,12 @@ class AuthController(
 
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest): ResponseEntity<LoginResponse> {
-        val decoded = FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
+        val decoded = try {
+            FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
+        } catch (e: Exception) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
+        }
+
         val uid = decoded.uid
         val email = decoded.email ?: ""
 
@@ -65,36 +68,33 @@ class AuthController(
     }
     @PostMapping("/register")
     fun register(@RequestBody request: RegisterRequest): ResponseEntity<RegisterResponse> {
-        try {
-            // Tạo user mới trên Firebase Authentication
-            val userRecord = FirebaseAuth.getInstance().createUser(
-                UserRecord.CreateRequest()
-                    .setEmail(request.email)
-                    .setPassword(request.password)
-                    .setEmailVerified(false)
-            )
+        return try {
+            // 1. Xác thực Firebase Token
+            val decoded = FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
+            val uid = decoded.uid
+            val email = decoded.email ?: return ResponseEntity.badRequest().build()
 
-            val uid = userRecord.uid
-
-            // Lưu thông tin user vào Firestore (ví dụ, thêm trường role mặc định "user")
+            // 2. Lưu thông tin user vào Firestore
             val firestore = FirestoreClient.getFirestore()
             val userData = mapOf(
-                "email" to request.email,
+                "email" to email,
                 "role" to "user"
             )
-            firestore.collection("users").document(uid).set(userData).get() // đợi hoàn thành
+            firestore.collection("users").document(uid).set(userData).get() // chờ hoàn thành
 
-            // Tạo dữ liệu trả về JWT
-            val tokenData = mapOf("uid" to uid, "email" to request.email, "role" to "user")
+            // 3. Tạo JWT để frontend sử dụng
+            val tokenData = mapOf("uid" to uid, "email" to email, "role" to "user")
             val accessToken = jwtUtil.generateToken(tokenData)
             val refreshToken = UUID.randomUUID().toString()
             refreshStore[uid] = refreshToken
 
-            return ResponseEntity.ok(RegisterResponse(accessToken, refreshToken, tokenData))
+            ResponseEntity.ok(RegisterResponse(accessToken, refreshToken, tokenData))
         } catch (ex: Exception) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+            ex.printStackTrace()
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
         }
     }
+
 
     @PostMapping("/refresh-token")
     fun refreshToken(@RequestBody request: RefreshRequest): ResponseEntity<Map<String, String>> {

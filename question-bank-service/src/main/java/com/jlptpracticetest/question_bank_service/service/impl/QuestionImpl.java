@@ -29,7 +29,8 @@ public class QuestionImpl implements QuestionService {
                 QuestionDTO questionDTO = new QuestionDTO(
                         question.getQuestion(),
                         question.getOptions(),
-                        question.getCorrectAnswerIndex()
+                        question.getCorrectAnswerIndex(),
+                        question.getAudioUrl()
                 );
                 questionDTOS.add(questionDTO);
             }

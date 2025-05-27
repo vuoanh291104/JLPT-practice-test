@@ -19,7 +19,7 @@ class JwtProperties {
 @Component
 class JwtUtil @Autowired constructor(jwtProperties: JwtProperties) {
 
-    private val expiration = 1000 * 60 * 15 // 15 minutes
+    private val expiration = 1000 * 60 * 60 * 5
 
     private val secretKey: SecretKey =
         Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.secret)) // decode base64 string

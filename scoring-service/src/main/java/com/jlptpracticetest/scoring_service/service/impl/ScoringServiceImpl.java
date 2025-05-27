@@ -2,9 +2,11 @@ package com.jlptpracticetest.scoring_service.service.impl;
 
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.cloud.FirestoreClient;
+import com.jlptpracticetest.scoring_service.model.Exam;
 import com.jlptpracticetest.scoring_service.model.ExamSessionRedis;
 import com.jlptpracticetest.scoring_service.model.Question;
 import com.jlptpracticetest.scoring_service.model.QuestionSet;
+import com.jlptpracticetest.scoring_service.repo.ExamRepo;
 import com.jlptpracticetest.scoring_service.repo.QuestionSetRepo;
 import com.jlptpracticetest.scoring_service.service.ScoringService;
 import lombok.extern.flogger.Flogger;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -24,6 +27,8 @@ public class ScoringServiceImpl implements ScoringService {
     RedisTemplate<String, ExamSessionRedis> redisTemplate;
     @Autowired
     private QuestionSetRepo questionSetRepo;
+    @Autowired
+    private ExamRepo examRepo;
     private final String PREFIX = "exam_session:";
     @Override
     public void scoreExam(String sessionId) {
@@ -34,6 +39,8 @@ public class ScoringServiceImpl implements ScoringService {
         }
         String userId= session.getUserId();
         String examId = session.getExamId();
+        Optional<Exam> examMd = examRepo.findById(examId);
+        String level = examMd.get().getLevel();
         Map<String ,Map<Integer,Integer>> userAnswers = session.getAnswers();
 
         List<QuestionSet> questionSets = questionSetRepo.findByExamId(examId);
@@ -67,6 +74,7 @@ public class ScoringServiceImpl implements ScoringService {
         log.info("Scoring session {}: vocab={}, reading={}, listening={}, total={}", sessionId, vocabScore, readingScore, listeningScore, totalScore);
 
         log.info("Scoring session {}: Vocabulary: {}/{} | Reading: {}/{} | Listening: {}/{}",
+                level,
                 sessionId,
                 sectionCorrect.getOrDefault("vocabulary", 0), sectionTotal.getOrDefault("vocabulary", 0),
                 sectionCorrect.getOrDefault("reading", 0), sectionTotal.getOrDefault("reading", 0),
@@ -80,6 +88,7 @@ public class ScoringServiceImpl implements ScoringService {
             Map<String, Object> scoreData = new HashMap<>();
             scoreData.put("userId", userId);
             scoreData.put("examId", examId);
+            scoreData.put("level", level);
             scoreData.put("vocabScore", vocabScore);
             scoreData.put("readingScore", readingScore);
             scoreData.put("listeningScore", listeningScore);

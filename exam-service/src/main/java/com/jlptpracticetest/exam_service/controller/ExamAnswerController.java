@@ -41,8 +41,12 @@ public class ExamAnswerController {
 
     @PostMapping("/submit")
     public ResponseEntity<String> submitExam(@RequestParam String sessionId){
-        examSessionRedisService.submitSession(sessionId);
-        return ResponseEntity.ok("exam submitted successfully");
-
+        try {
+            examSessionRedisService.submitSession(sessionId);
+            return ResponseEntity.ok("exam submitted successfully");
+        } catch (RuntimeException e) {
+            // Log lỗi (nếu muốn)
+            return ResponseEntity.status(500).body("Failed to submit exam: " + e.getMessage());
+        }
     }
 }

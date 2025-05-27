@@ -34,38 +34,92 @@ class AuthController(
 
     val refreshStore = mutableMapOf<String, String>() // Map uid -> refreshToken
 
-    @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseEntity<LoginResponse> {
-        val decoded = try {
-            FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
-        } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
-        }
+//    @PostMapping("/login")
+//    fun login(@RequestBody request: LoginRequest): ResponseEntity<LoginResponse> {
+//        try{
+//            val decoded = try {
+//                FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
+//            } catch (e: Exception) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
+//            }
+//
+//            val uid = decoded.uid
+//            val email = decoded.email ?: ""
+//
+//            // Lấy Firestore instance
+//            val firestore = FirestoreClient.getFirestore()
+//
+//            // Lấy document từ collection "users" với ID là uid
+//            val userDoc = firestore.collection("users").document(uid).get().get()
+//
+//            if (!userDoc.exists()) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
+//            }
+//
+//            val role = userDoc.getString("role") ?: "user" // fallback nếu không có trường "role"
+//
+//            val userData = mapOf("uid" to uid, "email" to email, "role" to role)
+//
+//            val accessToken = jwtUtil.generateToken(userData)
+//            val refreshToken = UUID.randomUUID().toString()
+//
+//            refreshStore[uid] = refreshToken
+//
+//            return ResponseEntity.ok(LoginResponse(accessToken, refreshToken, userData))
+//        } catch(e: Exception){
+//            e.printStackTrace()
+//        }
+//        return ResponseEntity.ok(LoginResponse("","", mapOf()))
+//    }
+@PostMapping("/login")
+fun login(@RequestBody request: LoginRequest): ResponseEntity<LoginResponse> {
+    println("===> [LOGIN] Bắt đầu xác thực...")
 
-        val uid = decoded.uid
-        val email = decoded.email ?: ""
-
-        // Lấy Firestore instance
-        val firestore = FirestoreClient.getFirestore()
-
-        // Lấy document từ collection "users" với ID là uid
-        val userDoc = firestore.collection("users").document(uid).get().get()
-
-        if (!userDoc.exists()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null)
-        }
-
-        val role = userDoc.getString("role") ?: "user" // fallback nếu không có trường "role"
-
-        val userData = mapOf("uid" to uid, "email" to email, "role" to role)
-
-        val accessToken = jwtUtil.generateToken(userData)
-        val refreshToken = UUID.randomUUID().toString()
-
-        refreshStore[uid] = refreshToken
-
-        return ResponseEntity.ok(LoginResponse(accessToken, refreshToken, userData))
+    val decoded = try {
+        println("===> [LOGIN] Xác thực Firebase token...")
+        FirebaseAuth.getInstance().verifyIdToken(request.firebaseToken)
+    } catch (e: Exception) {
+        println("===> [ERROR] Firebase token không hợp lệ:")
+        e.printStackTrace()
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
     }
+
+    val uid = decoded.uid
+    val email = decoded.email ?: ""
+    println("===> [LOGIN] Firebase token hợp lệ. UID: $uid, Email: $email")
+
+    // Lấy Firestore instance
+    val firestore = FirestoreClient.getFirestore()
+
+    // Lấy document từ collection "users" với ID là uid (có timeout)
+    val userDoc = try {
+        println("===> [LOGIN] Đang truy vấn Firestore với UID: $uid")
+        val future = firestore.collection("users").document(uid).get()
+        future.get(5, java.util.concurrent.TimeUnit.SECONDS) // timeout 5s
+    } catch (e: Exception) {
+        println("===> [ERROR] Không thể truy vấn Firestore:")
+        e.printStackTrace()
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+    }
+
+    if (!userDoc.exists()) {
+        println("===> [ERROR] Không tìm thấy user trong Firestore.")
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+    }
+
+    val role = userDoc.getString("role") ?: "user"
+    println("===> [LOGIN] Tìm thấy user. Role: $role")
+
+    val userData = mapOf("uid" to uid, "email" to email, "role" to role)
+
+    val accessToken = jwtUtil.generateToken(userData)
+    val refreshToken = UUID.randomUUID().toString()
+    refreshStore[uid] = refreshToken
+
+    println("===> [LOGIN] Đăng nhập thành công. Trả về token.")
+    return ResponseEntity.ok(LoginResponse(accessToken, refreshToken, userData))
+}
+
     @PostMapping("/register")
     fun register(@RequestBody request: RegisterRequest): ResponseEntity<RegisterResponse> {
         return try {

@@ -65,7 +65,7 @@ public class ExamSessionRedisServiceImpl implements ExamSessionRedisService {
                 rabbitTemplate.convertAndSend(SCORING_QUEUE, sessionId);
                 log.info("Successfully sent to RabbitMQ. Queue: {}, Payload: {}", SCORING_QUEUE, sessionId);
             } catch (Exception e) {
-                log.error("Failed to send message to RabbitMQ", e);
+                throw new RuntimeException("Failed to send message to RabbitMQ: " + e.getMessage());
             }
         } else {
             log.warn("Session not found in Redis for ID: {}", sessionId);

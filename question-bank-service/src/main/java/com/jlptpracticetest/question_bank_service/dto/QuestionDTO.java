@@ -1,7 +1,5 @@
 package com.jlptpracticetest.question_bank_service.dto;
 
-import lombok.Data;
-
 import java.util.List;
 
 
@@ -12,10 +10,11 @@ public class QuestionDTO {
     private int correctAnswerIndex;
     private String audioUrl;
 
-    public QuestionDTO(String question, List<String> options, int correctAnswerIndex) {
+    public QuestionDTO(String question, List<String> options, int correctAnswerIndex, String audioUrl) {
         this.question = question;
         this.options = options;
         this.correctAnswerIndex = correctAnswerIndex;
+        this.audioUrl = audioUrl;
     }
 
 
